@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Rechtsgeschichte · Zeitstrahl</title>
+  <meta name="description" content="Zeitstrahl zur Privatrechts- und Verfassungsgeschichte.">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css">
+  <script src="config.js" defer></script>
+  <script src="data.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="header">
+    <h1>Rechtsgeschichte</h1>
+    <button id="edit-mode" class="text-button" aria-pressed="false">Bearbeiten</button>
+  </header>
+  <main>
+    <div class="toolbar">
+      <div class="view-switch" role="group" aria-label="Ansicht">
+        <button id="horizontal-mode" aria-pressed="true">Horizontal</button>
+        <button id="vertical-mode" aria-pressed="false">Vertikal</button>
+      </div>
+      <div class="search-wrap">
+        <label class="sr-only" for="search">Suche</label>
+        <input id="search" type="search" placeholder="Suche" autocomplete="off">
+        <div id="search-results" class="search-results" hidden></div>
+      </div>
+      <button id="fit" class="text-button">Gesamtansicht</button>
+      <div id="author-actions" class="author-actions" hidden>
+        <button id="add" class="primary small">Ereignis hinzufügen</button>
+        <button id="files" class="text-button" aria-expanded="false">Datei <span aria-hidden="true">⌄</span></button>
+        <div id="file-menu" class="file-menu" hidden>
+          <button id="export-json">Daten exportieren</button>
+          <button id="import-json">Daten importieren</button>
+          <button id="export-html">HTML herunterladen</button>
+          <button id="import-local" hidden>Lokalen Browserstand übernehmen</button>
+        </div>
+      </div>
+    </div>
+    <div id="workspace" class="workspace">
+      <section id="horizontal" class="horizontal" aria-label="Horizontaler Zeitstrahl">
+        <div class="lane-labels"><span>Privatrechtsgeschichte</span><span>Verfassungsgeschichte</span></div>
+        <div id="plot" class="plot" tabindex="0" aria-label="Zeitstrahl, horizontal">
+          <svg id="axis" aria-hidden="true"></svg>
+          <div id="events"></div>
+        </div>
+        <div class="navigation">
+          <div class="navigation-top">
+            <div class="pan-controls">
+              <button id="previous" class="icon-button" aria-label="Früherer Zeitraum">←</button>
+              <output id="date-range" aria-live="off"></output>
+              <button id="next" class="icon-button" aria-label="Späterer Zeitraum">→</button>
+            </div>
+            <span class="zoom-hint">Zoom: Tasten <kbd>+</kbd> / <kbd>−</kbd></span>
+            <div class="zoom-controls">
+              <button id="zoom-out" class="icon-button" aria-label="Verkleinern">−</button>
+              <output id="zoom-level"></output>
+              <button id="zoom-in" class="icon-button" aria-label="Vergrößern">+</button>
+            </div>
+          </div>
+          <div id="overview" class="overview" tabindex="0" role="slider" aria-label="Sichtbarer Zeitraum" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+            <svg id="overview-svg" aria-hidden="true"></svg>
+            <div id="overview-window"></div>
+          </div>
+          <div class="overview-dates"><span id="first-year"></span><span id="last-year"></span></div>
+        </div>
+      </section>
+      <section id="vertical" class="vertical" hidden aria-label="Vertikaler Zeitstrahl">
+        <div class="vertical-headings"><span>Privatrechtsgeschichte</span><span>Verfassungsgeschichte</span></div>
+        <div id="vertical-content" class="vertical-content"></div>
+      </section>
+      <nav id="vertical-navigation" class="vertical-navigation" hidden aria-label="Zeitnavigation">
+        <div id="vertical-overview" class="vertical-overview" tabindex="0" role="scrollbar" aria-label="Zeitstrahlposition" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-controls="vertical">
+          <div id="vertical-overview-window" class="vertical-overview-window" hidden></div>
+        </div>
+      </nav>
+      <aside id="detail" class="detail" hidden aria-label="Ereignisdetails"></aside>
+    </div>
+  </main>
+  <dialog id="login-dialog">
+    <form id="login-form">
+      <div class="dialog-heading"><h2>Bearbeiten</h2><button type="button" id="login-close" class="icon-button" aria-label="Schließen">×</button></div>
+      <label for="edit-password">Passwort</label><input id="edit-password" type="password" autocomplete="current-password" required maxlength="256">
+      <div id="login-error" class="form-error" role="alert" hidden></div>
+      <div class="form-actions"><button type="button" id="login-cancel" class="secondary small">Abbrechen</button><button type="submit" id="login-submit" class="primary small">Freischalten</button></div>
+    </form>
+  </dialog>
+  <dialog id="editor">
+    <form id="event-form">
+      <div class="dialog-heading"><h2 id="editor-title">Ereignis hinzufügen</h2><button type="button" id="cancel-x" class="icon-button" aria-label="Schließen">×</button></div>
+      <label for="event-title">Ereignisname</label>
+      <input id="event-title" name="title" required maxlength="180">
+      <div class="form-row">
+        <div><label for="event-track">Bereich</label><select id="event-track" name="track"><option value="PRG">Privatrechtsgeschichte</option><option value="VfG">Verfassungsgeschichte</option></select></div>
+        <div><label for="event-type">Darstellung</label><select id="event-type" name="type"><option value="point">Ereignis</option><option value="period">Zeitraum</option></select></div>
+      </div>
+      <label for="event-priority">Relevanz</label><select id="event-priority" name="priority"><option value="3">Hoch</option><option value="2" selected>Mittel</option><option value="1">Ergänzend</option></select>
+      <div class="form-row"><div><label for="event-start">Jahr</label><input id="event-start" name="start" type="number" min="-3000" max="3000" required></div><div id="end-field" hidden><label for="event-end">Bis</label><input id="event-end" name="end" type="number" min="-3000" max="3000"></div></div>
+      <label for="event-date-label">Datumsangabe</label><input id="event-date-label" name="dateLabel" maxlength="80">
+      <label for="event-body">Beschriftung</label><textarea id="event-body" name="body" rows="5" maxlength="12000"></textarea>
+      <label for="event-lecture-cast">Lecture Cast (Video-URL)</label><input id="event-lecture-cast" name="lectureCast" type="url" maxlength="2048">
+      <label for="event-image">Bild</label><input id="event-image" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+      <div id="image-preview" class="image-preview" hidden><img id="preview-image" alt=""><button type="button" id="remove-image" class="text-button">Bild entfernen</button></div>
+      <label for="event-alt">Alternativtext</label><input id="event-alt" name="imageAlt" maxlength="500">
+      <label for="event-caption">Bildunterschrift (kurz)</label><input id="event-caption" name="caption" maxlength="1000">
+      <label for="event-image-source">Bildquelle (URL)</label><input id="event-image-source" name="imageSource" type="url" maxlength="2048">
+      <label for="event-image-rights">Lizenz / Nutzungsnachweis</label><input id="event-image-rights" name="imageRights" maxlength="500">
+      <label for="event-image-notes">Bildnotizen</label><textarea id="event-image-notes" name="imageNotes" rows="3" maxlength="4000"></textarea>
+      <label for="event-source">Fundstelle (Rz)</label><input id="event-source" name="source" maxlength="500">
+      <fieldset class="related-editor"><legend>Verknüpfte Ereignisse</legend><div class="related-add"><select id="related-target" aria-label="Ereignis verknüpfen"></select><button type="button" id="add-related" class="secondary small" disabled>Verknüpfen</button></div><ul id="related-list" class="related-list"></ul></fieldset>
+      <div id="form-error" class="form-error" role="alert" hidden></div>
+      <div class="form-actions"><button type="button" id="delete-event" class="text-button danger" hidden>Löschen</button><span></span><button type="button" id="cancel" class="secondary small">Abbrechen</button><button type="submit" class="primary small">Speichern</button></div>
+    </form>
+  </dialog>
+  <dialog id="delete-dialog"><form method="dialog"><h2>Ereignis löschen?</h2><p id="delete-name"></p><div class="form-actions"><button value="cancel" class="secondary small">Abbrechen</button><button value="delete" class="primary small">Löschen</button></div></form></dialog>
+  <dialog id="import-dialog"><form method="dialog"><h2>Daten importieren</h2><p id="import-summary"></p><div class="form-actions"><button value="cancel" class="secondary small">Abbrechen</button><button value="merge" class="secondary small">Zusammenführen</button><button value="replace" class="primary small">Ersetzen</button></div></form></dialog>
+  <input id="import-file" type="file" accept=".json,application/json" hidden>
+  <div id="status" class="status" role="status" hidden></div>
+</body>
+</html>
